@@ -36,7 +36,7 @@ mkdir "${root:?}"/etc/systemd/system/systemd-firstboot.service.d
 cat > "${root:?}"/etc/systemd/system/systemd-firstboot.service.d/install.conf << EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/systemd-firstboot --prompt
+ExecStart=/usr/bin/systemd-firstboot
 
 [Install]
 WantedBy=sysinit.target
@@ -44,4 +44,4 @@ EOF
 
 chroot "${root:?}" systemctl enable systemd-firstboot.service
 
-rm "${root:?}"/etc/{machine-id,localtime}
+rm "${root:?}"/etc/machine-id

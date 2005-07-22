@@ -1,10 +1,40 @@
 #!/bin/bash -xe
 set -o pipefail
 
-# Set a root password
-echo "root:guest" | chroot "${root:?}" chpasswd
+## Set a root password
+echo "root:reznor" | chroot "${root:?}" chpasswd
+
+## add a default regular user with systemd-homed on firstboot
+mkdir -p "${root:?}"/usr/lib/credstore
+cat > "${root:?}"/usr/lib/credstore/home.create.trent << EOF
+{
+	"disposition" : "regular",
+	"memberOf" : [
+		"sudo"
+	],
+	"privileged" : {
+		"hashedPassword" : [
+			"\$y\$j9T\$KiIvlGKRHOAfV600NZhag.\$cKOX95FUr7aSVL3EpU2dlDmf/xmL.UoeYonmI3ZkXXA"
+		]
+	},
+	"secret" : {
+		"password" : [
+			"reznor"
+		]
+	},
+	"userName" : "trent"
+}
+EOF
+
+mkdir "${root:?}"/etc/systemd/system/systemd-homed-firstboot.service.d
+cat > "${root:?}"/etc/systemd/system/systemd-homed-firstboot.service.d/override.conf << EOF
+[Service]
+ExecStart=
+ExecStart=homectl firstboot --enforce-password-policy=no
+EOF
+
 
 # Make console quieter
 cat > "${root:?}"/etc/sysctl.d/printk.conf << EOF
-kernel.printk = 3	4	1	3
+kernel.printk = 3      4       1       3
 EOF

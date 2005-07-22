@@ -2,6 +2,7 @@
 
 set -o pipefail
 
+#TODO: package this stuff in .debs and put in a reprepro
 cat > "${root:?}"/usr/sbin/halo-upgrade << EOF
 #!/bin/bash -e
 

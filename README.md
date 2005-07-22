@@ -1,4 +1,4 @@
-# ostree-demo
+# halo-os
 
 ## Intro
 
@@ -27,7 +27,7 @@ filesystem for you.
 
 ### Login
 
-Login as `root` with the password `guest`
+Login as `trent` with the password `reznor`
 
 ### Connect to the internet
 
@@ -50,3 +50,8 @@ Check for and apply system updates from public ostree repo, hosted at
     $ ./publish-repo           # migrate the content to an archive repo
     $ sudo ./generate-usb-img  # build a bootable usb image file
     $ ./sync-repo              # sync the archive repo up to a webserver
+
+# Notes and References
+
+<https://fedoramagazine.org/building-your-own-atomic-bootc-desktop/>
+<https://systemd.io/HOME_DIRECTORY/>

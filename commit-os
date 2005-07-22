@@ -2,9 +2,14 @@
 set -o pipefail
 
 . config
+. sh-lib
 
-version="$(find "$roots" -mindepth 1 -maxdepth 1 -type d | cut -d/ -f2 | sort -rn | head -1)"
-root="$roots"/"$version"
+# Check for dependencies:
+package_deps ostree
+
+#TODO: Maybe this script should take branch and version as arguments?
+version="$(cd "${roots:?}"/"${branch:?}"; find ./ -mindepth 1 -maxdepth 1 -type d | cut -d/ -f2 | sort -rn | head -1)"
+root="${roots:?}"/"${branch:?}"/"$version"
 
 if [ ! -d "$root" ]; then
 	echo "Error: root dir not found: $root" >&2
@@ -12,6 +17,8 @@ if [ ! -d "$root" ]; then
 fi
 
 [ -d "$build_repo" ] && rm -rf "$build_repo"
+
+mkdir -p "$build_repo"
 
 ostree --repo="$build_repo" init --mode=archive
 

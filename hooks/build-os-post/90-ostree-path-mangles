@@ -1,8 +1,8 @@
 #!/bin/bash -xe
 set -o pipefail
 
-# remove everything from dev and var
-rm -rf "${root:?}"/dev/* "${root:?}"/var/*
+# remove everything from dev
+rm -rvf "${root:?}"/dev/*
 
 # add sysroot mountpoint and ostree link to root
 mkdir -p "${root:?}"/sysroot
@@ -32,7 +32,7 @@ EOF
 
 # move /etc to /usr/etc
 mv "${root:?}"/etc "${root:?}"/usr/etc
-mkdir "${root:?}"/etc # do we need this?
+mkdir "${root:?}"/etc #TODO: do we need this?
 
 # link persistent directories to /var
 for dir in home opt srv mnt tmp; do

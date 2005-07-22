@@ -7,15 +7,22 @@ packages=(
 		debootstrap
 		dosfstools
 		e2fsprogs
+		flatpak
+		gnome-core
+		gnome-tweaks
 		lvm2
 		nethack-console
+		network-manager
 		ostree
 		parted
 		rsync
+		sudo
 		systemd-container
+		systemd-homed
+		task-english
 		xfsprogs
 	)
 
-chroot "${root:?}" apt-get -y install "${packages[@]}"
+chroot "${root:?}" apt-get -y --no-install-recommends install "${packages[@]}"
 
 echo 'kernel.unprivileged_userns_clone=1' > "${root:?}"/etc/sysctl.d/nspawn.conf
