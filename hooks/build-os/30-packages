@@ -1,0 +1,15 @@
+#!/bin/bash -xe
+set -o pipefail
+
+packages=(
+		debootstrap
+		dosfstools
+		nethack-console
+		ostree
+		parted
+		systemd-container
+	)
+
+chroot "${root:?}" apt-get -y install "${packages[@]}"
+
+echo 'kernel.unprivileged_userns_clone=1' > "${root:?}"/etc/sysctl.d/nspawn.conf

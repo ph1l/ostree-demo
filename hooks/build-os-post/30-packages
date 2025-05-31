@@ -1,0 +1,16 @@
+#!/bin/bash -xe
+set -o pipefail
+
+cat > "${root:?}"/etc/tmpfiles.d/var-lib-machines.conf << EOF
+d /var/lib/machines 0700 root root -
+EOF
+
+cat > "${root:?}"/etc/tmpfiles.d/var-games-nethack.conf << EOF
+d /var/games/nethack 2775 root games -
+d /var/games/nethack/dumps 2775 root games -
+d /var/games/nethack/save 2775 root games -
+f /var/games/nethack/perm 0664 root games -
+f /var/games/nethack/record 0664 root games -
+f /var/games/nethack/logfile 0664 root games -
+f /var/games/nethack/xlogfile 0664 root games -
+EOF
