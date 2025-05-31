@@ -1,0 +1,4 @@
+#!/bin/bash -xe
+set -o pipefail
+
+chroot "${root:?}" apt-get clean

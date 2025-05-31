@@ -1,0 +1,7 @@
+#!/bin/bash -xe
+
+set -o pipefail
+
+. config
+
+rsync -av --delete-after "$repo"/ "$publish_remote_repo"/

@@ -1,0 +1,50 @@
+#!/bin/bash -xe
+
+set -o pipefail
+
+. config
+. sh-lib
+
+version=$( date +%Y%m%d.%H%M%S )
+
+# Check for dependencies:
+package_deps debootstrap
+
+function unmount_pseudo_filesystems(){
+	set +e
+	for dir in dev sys proc; do umount -v "$root"/"$dir"; done
+	set -e
+}
+
+function on_exit(){
+	set +e
+	unmount_pseudo_filesystems
+}
+trap on_exit EXIT
+
+root="${roots:?}"/"$version"
+
+mkdir -p "$root"
+
+# bootstrap the OS
+
+debootstrap "$codename" "$root"
+
+for dir in /proc /sys /dev; do
+	mount --bind "$dir" "$root"/"$dir"
+done
+
+export DEBIAN_FRONTEND=noninteractive
+export version
+export root
+export osname
+export osversion
+export osdesc
+export branch
+export remote
+
+run-parts --exit-on-error -- hooks/build-os
+
+unmount_pseudo_filesystems
+
+run-parts --exit-on-error -- hooks/build-os-post

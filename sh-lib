@@ -1,0 +1,12 @@
+function package_deps(){
+	pkgs=
+	for pkg in $@; do
+		if ! dpkg -l $pkg 2>&1 >/dev/null; then
+			pkgs="$pkgs $pkg"
+		fi
+	done
+	if [ "$pkgs" != "" ]; then
+                apt-get update
+		apt-get --no-install-recommends install $pkgs
+	fi
+}

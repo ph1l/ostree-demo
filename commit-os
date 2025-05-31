@@ -1,0 +1,18 @@
+#!/bin/bash -xe
+set -o pipefail
+
+. config
+
+version="$(find "$roots" -mindepth 1 -maxdepth 1 -type d | cut -d/ -f2 | sort -rn | head -1)"
+root="$roots"/"$version"
+
+if [ ! -d "$root" ]; then
+	echo "Error: root dir not found: $root" >&2
+	exit 1
+fi
+
+[ -d "$build_repo" ] && rm -rf "$build_repo"
+
+ostree --repo="$build_repo" init --mode=archive
+
+ostree --repo="$build_repo" commit -b "$branch" --tree=dir="$root"

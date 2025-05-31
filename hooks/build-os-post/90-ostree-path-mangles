@@ -1,0 +1,47 @@
+#!/bin/bash -xe
+set -o pipefail
+
+# remove everything from dev and var
+rm -rf "${root:?}"/dev/* "${root:?}"/var/*
+
+# add sysroot mountpoint and ostree link to root
+mkdir -p "${root:?}"/sysroot
+ln -s /sysroot/ostree "${root:?}"/ostree
+
+# add tmpfiles config to create expected directory structure
+cat > "${root:?}"/etc/tmpfiles.d/var.conf << EOF
+d /var/log/journal 0755 root root -
+L /var/home - - - - ../sysroot/home
+d /var/opt 0755 root root -
+d /var/srv 0755 root root -
+d /var/roothome 0700 root root -
+d /var/usrlocal 0755 root root -
+d /var/usrlocal/bin 0755 root root -
+d /var/usrlocal/etc 0755 root root -
+d /var/usrlocal/games 0755 root root -
+d /var/usrlocal/include 0755 root root -
+d /var/usrlocal/lib 0755 root root -
+d /var/usrlocal/man 0755 root root -
+d /var/usrlocal/sbin 0755 root root -
+d /var/usrlocal/share 0755 root root -
+d /var/usrlocal/src 0755 root root -
+d /var/mnt 0755 root root -
+d /run/media 0755 root root -
+d /var/games 0755 root root -
+EOF
+
+# move /etc to /usr/etc
+mv "${root:?}"/etc "${root:?}"/usr/etc
+mkdir "${root:?}"/etc # do we need this?
+
+# link persistent directories to /var
+for dir in home opt srv mnt tmp; do
+	rmdir "${root:?}"/"$dir"
+	ln -s /var/"$dir" "${root:?}"/"$dir"
+done
+
+rm -rf "${root:?}"/root
+ln -s /var/roothome "${root:?}"/root
+
+rm -rf "${root:?}"/usr/local
+ln -s /var/usrlocal "${root:?}"/usr/local

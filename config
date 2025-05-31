@@ -1,0 +1,18 @@
+osname=halo
+osversion=01
+osdesc="Down In It"
+codename=trixie
+
+branch="$osname"/"$osversion"/x86_64/buildmain/standard
+
+# local dirs
+roots=roots
+build_repo=build-repo
+repo=repo
+
+# remote
+remote=repo-dev
+remote_url="https://os.halo.nu/$remote"
+
+# publish-repo
+publish_remote_repo="ph1l@os.halo.nu:/var/www/os.halo.nu/$remote"

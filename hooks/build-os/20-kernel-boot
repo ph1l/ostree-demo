@@ -1,0 +1,5 @@
+#!/bin/bash -xe
+set -o pipefail
+
+chroot "${root:?}" apt-get --assume-yes install firmware-linux grub-efi-amd64 \
+	linux-image-amd64 ostree-boot

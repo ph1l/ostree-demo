@@ -1,0 +1,10 @@
+#!/bin/bash -xe
+set -o pipefail
+
+# Set a root password
+echo "root:guest" | chroot "${root:?}" chpasswd
+
+# Make console quieter
+cat > "${root:?}"/etc/sysctl.d/printk.conf << EOF
+kernel.printk = 3	4	1	3
+EOF

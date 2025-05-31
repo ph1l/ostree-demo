@@ -1,0 +1,47 @@
+#!/bin/bash -xe
+
+set -o pipefail
+
+# Configure systemd-growfs-root
+mkdir "${root:?}"/etc/systemd/system/systemd-growfs-root.service.d
+
+cat > "${root:?}"/etc/systemd/system/systemd-growfs-root.service.d/override.conf << EOF
+[Unit]
+ConditionFirstBoot=yes
+
+[Service]
+ExecStart=/usr/lib/systemd/systemd-growfs /sysroot
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chroot "${root:?}" systemctl enable systemd-growfs-root.service
+
+# Configure systemd-repart
+
+mkdir "${root:?}"/etc/repart.d
+
+cat > "${root:?}"/etc/repart.d/50-root.conf << EOF
+[Partition]
+Type=linux-generic
+GrowFileSystem=yes
+EOF
+
+chroot "${root:?}" apt-get install -y systemd-repart
+
+# Configure systemd-firstboot
+
+mkdir "${root:?}"/etc/systemd/system/systemd-firstboot.service.d
+cat > "${root:?}"/etc/systemd/system/systemd-firstboot.service.d/install.conf << EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/systemd-firstboot --prompt
+
+[Install]
+WantedBy=sysinit.target
+EOF
+
+chroot "${root:?}" systemctl enable systemd-firstboot.service
+
+rm "${root:?}"/etc/{machine-id,localtime}

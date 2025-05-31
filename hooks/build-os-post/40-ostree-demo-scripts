@@ -1,0 +1,36 @@
+#!/bin/bash -xe
+
+set -o pipefail
+
+cat > "${root:?}"/usr/sbin/halo-upgrade << EOF
+#!/bin/bash -e
+
+set -o pipefail
+
+remote="${remote:?}"
+branch="${branch:?}"
+
+remote_ref=\$(ostree remote refs -r "\$remote" | egrep ^"\$remote":"\$branch"'\\s' | awk '{print \$2}')
+local_ref=\$(ostree refs -r | egrep ^"\$remote":"\$branch"'\\s' | awk '{print \$2}')
+
+if [ "\$local_ref" != "\$remote_ref" -a -n "\$remote_ref" ]; then
+	echo "OS Update available. Installing..."
+
+	set -x
+
+	ostree admin upgrade
+
+	grub-mkconfig -o /boot/grub/grub.cfg
+
+	set +x
+
+	echo "OS Update Installed. Press Enter to Reboot..."
+
+	read
+
+	reboot
+else
+	echo "No OS Update found."
+fi
+EOF
+chmod 755 "${root:?}"/usr/sbin/halo-upgrade

@@ -1,0 +1,16 @@
+#!/bin/bash -xe
+set -o pipefail
+
+# Append motd
+
+cat >> "${root:?}"/etc/motd << EOF
+
+${osname:?}/${osversion:?} (${osdesc:?}) v${version:?}
+EOF
+
+# Set hostname
+echo "${osname:?}-${osversion:?}" > "${root:?}"/etc/hostname
+echo "127.0.1.1 ${osname:?}-${osversion:?}" >> "${root:?}"/etc/hosts
+
+# Install network manager
+chroot "${root:?}" apt-get install -y network-manager

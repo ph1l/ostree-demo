@@ -1,0 +1,22 @@
+#!/bin/bash -xe
+set -o pipefail
+
+# Kernel mangling
+
+kver=$(ls -1 "${root:?}"/usr/lib/modules)
+
+# move kernel out of /boot into /usr/lib/modules/
+mv "${root:?}"/boot/vmlinuz-"$kver" "${root:?}"/usr/lib/modules/"$kver"/vmlinuz
+mv "${root:?}"/boot/initrd.img-"$kver" "${root:?}"/usr/lib/modules/"$kver"/initramfs.img
+mv "${root:?}"/boot/config-"$kver" "${root:?}"/usr/lib/modules/"$kver"/config
+mv "${root:?}"/boot/System.map-"$kver" "${root:?}"/usr/lib/modules/"$kver"/System.map
+
+# remove kernel symlinks from root
+rm "${root:?}"/vmlinuz* "${root:?}"/initrd.*
+
+khash=$(sha256sum "${root:?}"/usr/lib/modules/"$kver"/vmlinuz | awk '{print $1}')
+
+# add ostree style kernel links from /usr/lib/ostree-boot
+mkdir -p "${root:?}"/usr/lib/ostree-boot
+ln -s /usr/lib/modules/"$kver"/vmlinuz "${root:?}"/usr/lib/ostree-boot/vmlinuz-"$khash"
+ln -s /usr/lib/modules/"$kver"/initramfs.img "${root:?}"/usr/lib/ostree-boot/initramfs-"$khash"

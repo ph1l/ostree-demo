@@ -1,0 +1,23 @@
+#!/bin/bash -xe
+
+set -o pipefail
+
+. config
+
+version="$(find "$roots" -mindepth 1 -maxdepth 1 -type d | cut -d/ -f2 | sort -rn | head -1)"
+
+[ ! -d "$repo" ] && ostree --repo="$repo" init --mode=archive
+
+REF=$(ostree --repo="$build_repo" rev-parse "$branch")
+
+ostree --repo="$repo" pull-local "$build_repo" "$REF"
+
+ostree --repo="$repo" commit -b "$branch" \
+	-s "$osname/$osversion:($osdesc) $branch $version" \
+	--add-metadata-string=version="$branch":"$version" \
+	--gpg-sign=CE4A0BF21E1C237DD8C400FAA39487B22697143F \
+	--tree=ref="$REF"
+
+ostree --repo="$repo" static-delta generate "$branch" || echo "Warning: static-delta generate failed" >&2
+
+ostree --repo="$repo" summary -u

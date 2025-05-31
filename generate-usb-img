@@ -1,0 +1,96 @@
+#!/bin/bash -xe
+
+set -o pipefail
+
+. ./config
+. ./sh-lib
+
+sysroot=/tmp/$$.ostree_usb
+
+version=$(date +%Y%m%d.%H%M%S)
+image="./$osname-$osversion-usb-$version.img"
+seek_sectors=$(( (8 *1024 *1024 *2) +33 -1 ))
+
+# Check for dependencies:
+package_deps dosfstools ostree parted udev
+
+[ -f "$image" ] && rm "$image"
+
+dd if=/dev/zero of="$image" seek="$seek_sectors" count=1 bs=512
+loopdev=$(losetup -f --show "$image")
+
+function cleanup(){
+	set +e
+	if [ -n "$deployroot" ]; then
+		for p in /proc /sys /dev /image /boot/efi /boot /sysroot; do
+			umount "$deployroot""$p"
+		done
+		if [ -f "$deployroot"/image ]; then
+			chattr -i "$deployroot"
+			rm -f "$deployroot"/image
+			chattr +i "$deployroot"
+		fi
+	fi
+	for p in /boot/efi /; do
+		umount "$sysroot""$p"
+	done
+	rmdir "$sysroot"
+	partx -d "$loopdev"p1
+	partx -d "$loopdev"p2
+	losetup -d "$loopdev"
+}
+trap cleanup EXIT
+
+parted -a optimal -s "$loopdev" -- \
+	mklabel gpt unit MiB \
+	mkpart ESP fat32 1 17 \
+	mkpart root ext4 17 8192 \
+	set 1 boot on \
+	print
+
+partx -a "$loopdev" || /bin/true
+mkfs.vfat -n ESP "$loopdev"p1
+mkfs.ext4 -L root "$loopdev"p2
+rootuuid=$(blkid -s UUID -o value "$loopdev"p2)
+mkdir -p "$sysroot"
+mount "$loopdev"p2 "$sysroot"
+mkdir -p "$sysroot"/boot/efi
+mount "$loopdev"p1 "$sysroot"/boot/efi
+
+ostree admin init-fs "$sysroot"
+ostree admin --sysroot="$sysroot" os-init "$osname"
+
+ostree --repo="$sysroot"/ostree/repo remote add --gpg-import=key.asc "$remote" "$remote_url" "$branch"
+ostree --repo="$sysroot"/ostree/repo pull-local --remote="$remote" "$repo" "$branch"
+
+ostree --repo="$sysroot"/ostree/repo config set sysroot.bootprefix true
+ostree admin --sysroot="$sysroot" deploy --os="$osname" --karg=root=UUID="$rootuuid" --karg=rw "$remote":"$branch"
+
+current_deployment=$(ostree admin --sysroot="$sysroot" status | awk '{print $2}' | head -1)
+deployroot="$sysroot"/ostree/deploy/"$osname"/deploy/"$current_deployment"
+
+chattr -i "$deployroot"
+touch "$deployroot"/image
+chattr +i "$deployroot"
+
+mount --bind "$image" "$deployroot"/image
+mount --bind "$sysroot"/boot "$deployroot"/boot
+mount --bind "$sysroot"/boot/efi "$deployroot"/boot/efi
+
+for p in /proc /sys /dev; do
+	mount --bind "$p" "$deployroot""$p"
+done
+
+chroot "$deployroot" /usr/sbin/grub-install --target='x86_64-efi' \
+	--efi-directory=/boot/efi --boot-directory=/boot \
+	--bootloader-id=GRUB --removable "$image"
+
+mount --bind "$sysroot" "$deployroot"/sysroot
+chroot "$deployroot" grub-mkconfig -o /boot/grub/grub.cfg
+
+trap - EXIT
+cleanup
+
+bmaptool create "$image" > "$image".bmap
+xz "$image"
+sha256sum "$image".xz > "$image".sha256sum
