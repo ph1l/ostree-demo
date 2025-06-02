@@ -2,12 +2,18 @@
 set -o pipefail
 
 packages=(
+		btrfs-progs
+		cryptsetup
 		debootstrap
 		dosfstools
+		e2fsprogs
+		lvm2
 		nethack-console
 		ostree
 		parted
+		rsync
 		systemd-container
+		xfsprogs
 	)
 
 chroot "${root:?}" apt-get -y install "${packages[@]}"
